@@ -5,7 +5,6 @@ import Header from '@/components/Header.vue' // путь к твоему Header.
 <template>
   <Header />
   <el-container>
-    <!-- ASIDE -->
     <el-aside v-if="!$route.meta.hideAside" width="200px">
       Aside
     </el-aside>
