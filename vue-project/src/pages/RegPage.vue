@@ -59,7 +59,7 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import axios from 'axios';
 import router from '@/router';
 
-const api = 'http://localhost:3000'
+const api = 'https://ragbotedu.vercel.app'
 
 const registrationFormRef = ref<FormInstance>();
 const isLoading = ref(false);
