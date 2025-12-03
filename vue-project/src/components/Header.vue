@@ -4,7 +4,6 @@ import ModaLogin from '@/components/ModaLogin.vue'
 import { ref } from 'vue'
 
 const loginModalRef = ref<InstanceType<typeof ModaLogin> | null>(null)
-
 const openLogin = () => loginModalRef.value?.open()
 
 </script>
