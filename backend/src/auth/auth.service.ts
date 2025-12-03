@@ -6,24 +6,23 @@ import { RegisterDto } from './register.dto';
 
 @Injectable()
 export class AuthService {
-  // Внедряем JwtService
+
   constructor(private prisma: PrismaService, private jwtService: JwtService) {} 
 
 async register(userData: RegisterDto) {
     const { username, email, password } = userData;
     
-    // 1. Хеширование пароля
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-      // 2. Сохранение пользователя в БД
+
       const user = await this.prisma.user.create({
         data: {
           username, 
           email,
-          password: hashedPassword, // Сохраняем хеш, а не сам пароль
+          password: hashedPassword, 
         },
-        // Возвращаем только безопасные данные
         select: {
           id: true,
           username: true,
@@ -37,7 +36,7 @@ async register(userData: RegisterDto) {
       console.log(process.env.DATABASE_URL)
       console.error("Prisma error during registration:", error);
       if (error.code === 'P2002') {
-        // Определяем, какое поле вызвало конфликт (email или username)
+       
         const target = error.meta.target.includes('email') ? 'Email' : 'Username';
         
         throw new ConflictException(`${target} is already taken.`);
@@ -48,7 +47,7 @@ async register(userData: RegisterDto) {
     }
   }
 
-  // НОВЫЙ МЕТОД: Валидация пользователя (используется для входа)
+
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
@@ -67,7 +66,7 @@ async register(userData: RegisterDto) {
     return null;
   }
 
-  // НОВЫЙ МЕТОД: Вход и генерация токена
+
   async login(user: any) {
     // payload - данные, которые мы записываем в токен (обычно id пользователя)
     const payload = { 

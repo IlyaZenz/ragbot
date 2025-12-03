@@ -13,25 +13,21 @@ export interface JwtPayload {
 }
 
 @Injectable()
-// Указываем, что это JWT-стратегия с именем 'jwt'
+
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') { 
   constructor(private prisma: PrismaService) {
     super({
-      // 1. Как извлекать токен: из заголовка Authorization (Bearer token)
+
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), 
       
-      // 2. Использовать тот же секретный ключ
+
       secretOrKey: jwtSecret, 
-      
-      // 3. Отключаем проверку срока годности токена на всякий случай
-      // (В продакшене лучше оставить true)
+
       ignoreExpiration: false, 
     });
   }
 
-  // Метод 'validate' выполняется после успешной расшифровки токена
   async validate(payload: JwtPayload) {
-    // Ищем пользователя по ID, который мы записали в 'sub'
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: { 
@@ -45,8 +41,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException();
     }
     
-    // Если пользователь найден, Passport добавляет этот объект 
-    // к объекту запроса (req.user)
     return user; 
   }
 }

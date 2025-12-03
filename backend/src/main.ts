@@ -4,9 +4,19 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const allowedOrigins = isProduction
+    ? [
+        // 1. Укажите ваш домен Vercel здесь (ОБЯЗАТЕЛЬНО)
+        'https://my-ragbot-frontend.vercel.app', // Замените на ваш реальный домен!
+        // 2. Если вы еще используете локальный фронтенд
+        'http://localhost:5173',
+      ]
+    : ['http://localhost:5173', 'http://localhost:3000'];
   app.enableCors({
     // 2. Указываем, какие источники разрешены
-    origin: 'http://localhost:5173',
+
+    origin: allowedOrigins,
 
     // 3. Разрешенные методы (POST, GET, PUT, DELETE)
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
