@@ -13,7 +13,7 @@ import { PrismaService } from './prisma/prisma.service';
   imports: [PrismaModule,AuthModule,ConfigModule.forRoot({
       isGlobal: true, 
     }),],
-  controllers: [AppController],
+  controllers: [AppController,AuthController],
   providers: [AppService,AuthService],
 })
 export class AppModule {}

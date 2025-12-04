@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { accessTokenExpiresInTime, jwtSecret } from 'src/config/auth.config';
+import { LocalStrategy } from './local.strategy';
 
 // Мы добавим JwtStrategy позже, пока импортируем только токен
 
@@ -22,6 +23,7 @@ import { accessTokenExpiresInTime, jwtSecret } from 'src/config/auth.config';
   controllers: [AuthController],
   providers: [
     AuthService,
+    LocalStrategy,
   ],
   exports: [AuthService, JwtModule], 
 })

@@ -40,15 +40,19 @@
 </template>
 <script setup lang="ts">
 import { ref, defineExpose, defineModel, reactive } from 'vue'
-import type { FormInstance, FormRules } from 'element-plus'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const visible = defineModel<boolean>('visible', { default: false })
+axios.defaults.withCredentials = true;
 
 const open = () => { visible.value = true }
 const close = () => { visible.value = false }
 defineExpose({ open, close })
 
-
+const router = useRouter();
+const api = 'http://localhost:3000';
 
 const ruleFormRef = ref<FormInstance>()
 
@@ -69,23 +73,47 @@ const rules = reactive<FormRules<typeof ruleForm>>({
 })
 
 const submitLoginForm = async (formEl: FormInstance | undefined) => {
-  if (!formEl) return
+if (!formEl) return
 
+    // Валидация формы Element Plus
+    const isValid = await formEl.validate();
 
-  const valid = await formEl.validate((valid, fields) => {
-    if (valid) {
+    if (isValid) {
+        try {
+            const response = await axios.post(`${api}/auth/login`, {
+                email: ruleForm.email,
+                password: ruleForm.password,
+            });
 
-      console.log('Login attempt:', ruleForm.email, ruleForm.password)
+            const token = response.data.access_token;
 
-      setTimeout(() => {
-        close()
-        formEl.resetFields()
-      }, 300);
+            ElMessage({
+                message: `Welcome back, ${response.data.user.username}!`,
+                type: 'success',
+            });
 
+            formEl.resetFields();
+            close();
+            
+            router.push('/'); 
+
+        } catch (error) {
+            let errorMessage = 'Login failed. Please check your credentials.';
+            if (axios.isAxiosError(error) && error.response) { 
+                errorMessage = error.response.data?.message || errorMessage;
+                
+                if (Array.isArray(errorMessage)) {
+                    errorMessage = errorMessage[0];
+                }
+            } else if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+            ElMessage.error(errorMessage);
+            ruleForm.password = '';
+        }
     } else {
-      console.log('Validation failed!', fields)
+        console.log('Validation failed!');
     }
-  })
 }
 
 const resetForm = (formEl: FormInstance | undefined) => {

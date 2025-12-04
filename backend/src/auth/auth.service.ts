@@ -1,27 +1,33 @@
-import { JwtService } from '@nestjs/jwt'; 
-import { ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 const bcrypt = require('bcryptjs');
 import { RegisterDto } from './register.dto';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {} 
-
-async register(userData: RegisterDto) {
+  async register(userData: RegisterDto) {
     const { username, email, password } = userData;
-    
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-
       const user = await this.prisma.user.create({
         data: {
-          username, 
+          username,
           email,
-          password: hashedPassword, 
+          password: hashedPassword,
         },
         select: {
           id: true,
@@ -31,22 +37,37 @@ async register(userData: RegisterDto) {
       });
 
       return { message: 'Registration successful', user };
-
     } catch (error) {
-      console.log(process.env.DATABASE_URL)
-      console.error("Prisma error during registration:", error);
-      if (error.code === 'P2002') {
-       
-        const target = error.meta.target.includes('email') ? 'Email' : 'Username';
-        
-        throw new ConflictException(`${target} is already taken.`);
+      console.log(process.env.DATABASE_URL);
+      console.error('Prisma error during registration:', error);
+
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // Безопасно определяем, какое поле вызвало конфликт
+        const targets = Array.isArray(error.meta?.target)
+          ? (error.meta.target as string[])
+          : [];
+
+        let targetField = '';
+        if (targets.includes('email')) {
+          targetField = 'Email';
+        } else if (targets.includes('username')) {
+          targetField = 'Username';
+        }
+
+        if (targetField) {
+          throw new ConflictException(`${targetField} is already taken.`);
+        }
       }
-      
+
       // Другие ошибки сервера
-      throw new InternalServerErrorException('Server error during registration.');
+      throw new InternalServerErrorException(
+        'Server error during registration.',
+      );
     }
   }
-
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.prisma.user.findUnique({ where: { email } });
@@ -66,17 +87,15 @@ async register(userData: RegisterDto) {
     return null;
   }
 
-
   async login(user: any) {
-    // payload - данные, которые мы записываем в токен (обычно id пользователя)
-    const payload = { 
-        email: user.email, 
-        sub: user.id, // 'sub' (subject) - стандартное поле JWT
+    const payload = {
+      email: user.email,
+      sub: user.id,
     };
 
     return {
-      access_token: this.jwtService.sign(payload), // Генерация токена
-      user: { id: user.id, email: user.email, username: user.username }
+      access_token: this.jwtService.sign(payload),
+      user: { id: user.id, email: user.email, username: user.username },
     };
   }
 }
