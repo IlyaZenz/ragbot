@@ -1,0 +1,44 @@
+# Имя вашего пайплайна
+name: NestJS CI Pipeline
+
+
+on:
+  push:
+    branches: [ main, develop ] 
+  pull_request:
+    branches: [ main ] 
+
+jobs:
+  build_and_test:
+    name: Build and Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm' 
+        
+    - name: Install dependencies
+      run: npm ci 
+      
+    - name: Compile TypeScript code
+      run: npm run build 
+      
+    - name: Run Unit and E2E Tests
+      run: npm run test:cov 
+      
+    - name: Run Linter
+      run: npm run lint
+      
+    - name: Final Status Check
+      if: success()
+      run: echo "✅ CI checks passed successfully. Code is ready for deployment/merge."
+    
+    - name: Failure Status Alert
+      if: failure()
+      run: echo "❌ CI failed. Fix errors in tests, build, or linter."
