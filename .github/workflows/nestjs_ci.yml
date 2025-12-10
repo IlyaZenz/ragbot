@@ -1,0 +1,55 @@
+# Имя вашего пайплайна
+name: NestJS CI Pipeline
+
+# События, которые запускают пайплайн
+on:
+  push:
+    branches: [ main, develop ] # Запуск при пуше в основные ветки
+  pull_request:
+    branches: [ main ] # Запуск при создании/обновлении PR
+
+# Работы (Jobs)
+jobs:
+  build_and_test:
+    # Имя работы
+    name: Build and Run Tests
+    # Операционная система для выполнения
+    runs-on: ubuntu-latest
+    
+    # Шаги (Steps)
+    steps:
+    # 1. Извлечение (Checkout) кода
+    - name: Checkout repository code
+      uses: actions/checkout@v4
+      
+    # 2. Настройка окружения (Node.js)
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' # Рекомендуемая версия Node.js
+        cache: 'npm' # Включение кэширования для ускорения установки зависимостей
+        
+    # 3. Установка зависимостей (CI Step)
+    - name: Install dependencies
+      run: npm ci # Используем npm ci (Clean Install) для CI/CD, чтобы обеспечить идентичные сборки
+      
+    # 4. Сборка TypeScript (Build Step)
+    - name: Compile TypeScript code
+      run: npm run build # Команда, которая компилирует NestJS-код в JavaScript (tsc)
+      
+    # 5. Выполнение автоматических тестов (Testing Step / Проверка надёжности)
+    - name: Run Unit and E2E Tests
+      run: npm run test:cov # Запуск тестов с покрытием
+      
+    # 6. Дополнительный шаг: Линтинг (Code Quality Check)
+    - name: Run Linter
+      run: npm run lint # Проверка стиля кода
+      
+    # 7. Отчёт о статусе
+    - name: Final Status Check
+      if: success()
+      run: echo "✅ CI checks passed successfully. Code is ready for deployment/merge."
+    
+    - name: Failure Status Alert
+      if: failure()
+      run: echo "❌ CI failed. Fix errors in tests, build, or linter."
